@@ -2,6 +2,7 @@
 # coding: utf-8
 
 # Import Splinter and BeautifulSoup
+from tkinter import BROWSE
 from splinter import Browser
 from bs4 import BeautifulSoup as soup
 from webdriver_manager.chrome import ChromeDriverManager
@@ -21,11 +22,13 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
-        "last_modified": dt.datetime.now()
+        "last_modified": dt.datetime.now(),
+        "hemispheres": hemisphere_image(browser)
     }
 
+
     # Stop webdriver and return data
-    Browser.quit()
+    browser.quit()
     return data
 
 def mars_news(browser):
@@ -79,12 +82,13 @@ def featured_image(browser):
     try:
         img_url_rel = img_soup.find('img', class_='fancybox-image').get('src')
         img_url_rel
-    except AttributionError:
+    except AttributeError:
         return None    
 
     # Use the base URL to create an absolute URL
     img_url = f'https://spaceimages-mars.com/{img_url_rel}'
     return img_url
+
 
 def mars_facts():
 
@@ -98,8 +102,37 @@ def mars_facts():
     df.columns=['description', 'Mars', 'Earth']
     df.set_index('description', inplace=True)
 
-    Browser.quit()
+    # Browser.back()
     return df.to_html()
 
+## Mars Hemispheres
 
+def hemisphere_image(browser):
+    
+    url = 'https://marshemispheres.com/'
+    browser.visit(url)
 
+    # html=browser.html
+    # hemi_soup = soup(html,'html.parser')
+
+    hemisphere_image_urls = []
+
+    # img_link = browser.find_by_css('a.product-item h3')
+
+    for h in range(4):
+        hemispheres = {}
+        browser.find_by_css('a.product-item h3')[h].click()
+        hemi_img= browser.links.find_by_text("Sample").first
+        hemi_image_url =hemi_img['href']
+        hemi_title = browser.find_by_css("h2.title").text
+        hemispheres['img_url'] = hemi_image_url
+        hemispheres['title'] = hemi_title
+        hemisphere_image_urls.append(hemispheres)
+        browser.back()
+    print(hemisphere_image_urls)
+
+    return hemisphere_image_urls
+
+if __name__ == "__main__":  
+#    export FLASK_ENV="development"
+    print(scrape_all())
